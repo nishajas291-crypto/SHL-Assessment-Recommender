@@ -1,0 +1,358 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SHL Assessment Recommender | AI Dashboard</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --shl-primary: #00A3AD;
+            --shl-navy: #051C2C;
+            --shl-bg: #F3F7F9;
+        }
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: var(--shl-bg);
+            color: var(--shl-navy);
+        }
+        .glass {
+            background: rgba(255, 255, 255, 0.7);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.3);
+        }
+        .chat-bubble-user {
+            background: var(--shl-primary);
+            color: white;
+            border-radius: 18px 18px 2px 18px;
+        }
+        .chat-bubble-ai {
+            background: white;
+            color: var(--shl-navy);
+            border-radius: 18px 18px 18px 2px;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+        }
+        .custom-scrollbar::-webkit-scrollbar {
+            width: 6px;
+        }
+        .custom-scrollbar::-webkit-scrollbar-track {
+            background: transparent;
+        }
+        .custom-scrollbar::-webkit-scrollbar-thumb {
+            background: #CBD5E0;
+            border-radius: 10px;
+        }
+        .shl-btn {
+            background: var(--shl-primary);
+            transition: all 0.3s ease;
+        }
+        .shl-btn:hover {
+            filter: brightness(1.1);
+            transform: translateY(-1px);
+        }
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        .animate-fade-in {
+            animation: fadeIn 0.4s ease forwards;
+        }
+        .no-scrollbar::-webkit-scrollbar {
+            display: none;
+        }
+    </style>
+</head>
+<body class="h-screen overflow-hidden flex flex-col">
+
+    <!-- Header -->
+    <header class="h-16 glass z-50 flex items-center justify-between px-8 border-b border-gray-200">
+        <div class="flex items-center gap-3">
+            <div class="w-10 h-10 bg-[#00A3AD] rounded-lg flex items-center justify-center text-white">
+                <i data-lucide="cpu" class="w-6 h-6"></i>
+            </div>
+            <div>
+                <h1 class="text-xl font-bold tracking-tight text-[#051C2C]">SHL <span class="font-normal opacity-60">Recommender</span></h1>
+                <p class="text-[10px] uppercase tracking-widest font-semibold text-[#00A3AD]">AI-Powered Assessment Engine</p>
+            </div>
+        </div>
+        <div class="flex items-center gap-4">
+            <span class="flex items-center gap-2 text-sm font-medium text-green-600 bg-green-50 px-3 py-1 rounded-full border border-green-100">
+                <span class="w-2 h-2 bg-green-500 rounded-full animate-pulse"></span>
+                API Connected
+            </span>
+            <button class="p-2 hover:bg-white rounded-full transition-colors">
+                <i data-lucide="settings" class="w-5 h-5 text-gray-400"></i>
+            </button>
+        </div>
+    </header>
+
+    <!-- Main Content -->
+    <main class="flex-1 flex overflow-hidden">
+        
+        <!-- Left: Chat Section -->
+        <section class="w-[450px] flex flex-col border-r border-gray-200 bg-white/50 backdrop-blur-sm">
+            <div class="p-4 border-b border-gray-100 flex items-center justify-between">
+                <h2 class="font-semibold text-sm text-gray-500 uppercase tracking-wider">Recruiter Chat</h2>
+                <button onclick="resetChat()" class="text-xs flex items-center gap-1 text-[#00A3AD] hover:underline">
+                    <i data-lucide="rotate-ccw" class="w-3 h-3"></i> Reset
+                </button>
+            </div>
+
+            <!-- Messages Area -->
+            <div id="chat-container" class="flex-1 overflow-y-auto p-6 space-y-6 custom-scrollbar">
+                <!-- AI Welcome Message -->
+                <div class="flex flex-col items-start gap-2">
+                    <div class="chat-bubble-ai p-4 max-w-[90%] text-sm leading-relaxed">
+                        Hi there! I'm your SHL Assessment Assistant. Paste a Job Description or tell me about the role you're hiring for, and I'll recommend the best assessments.
+                    </div>
+                </div>
+            </div>
+
+            <!-- Quick Replies -->
+            <div id="quick-replies" class="p-4 flex gap-2 overflow-x-auto no-scrollbar">
+                <button onclick="sendQuickReply('I am hiring for a Junior Software Engineer role. Need both coding and personality tests.')" class="whitespace-nowrap px-4 py-2 bg-white border border-gray-200 rounded-full text-xs font-medium hover:border-[#00A3AD] hover:text-[#00A3AD] transition-all shadow-sm">🎓 Junior Engineer</button>
+                <button onclick="sendQuickReply('Looking for assessments for a Senior Product Manager.')" class="whitespace-nowrap px-4 py-2 bg-white border border-gray-200 rounded-full text-xs font-medium hover:border-[#00A3AD] hover:text-[#00A3AD] transition-all shadow-sm">📦 Product Manager</button>
+                <button onclick="sendQuickReply('Sales executive role for a tech company.')" class="whitespace-nowrap px-4 py-2 bg-white border border-gray-200 rounded-full text-xs font-medium hover:border-[#00A3AD] hover:text-[#00A3AD] transition-all shadow-sm">🤝 Sales Role</button>
+            </div>
+
+            <!-- Input Area -->
+            <div class="p-4 bg-white border-t border-gray-100">
+                <div class="relative flex items-end gap-2 bg-gray-50 rounded-2xl p-2 border border-gray-200 focus-within:border-[#00A3AD] transition-all">
+                    <textarea 
+                        id="user-input"
+                        rows="1"
+                        placeholder="Type or paste Job Description..." 
+                        class="flex-1 bg-transparent border-none focus:ring-0 text-sm py-2 px-2 resize-none max-h-32 custom-scrollbar"
+                    ></textarea>
+                    <button 
+                        onclick="sendMessage()"
+                        id="send-btn"
+                        class="shl-btn w-10 h-10 rounded-xl flex items-center justify-center text-white shrink-0 shadow-lg shadow-[#00A3AD]/20"
+                    >
+                        <i data-lucide="send" class="w-5 h-5"></i>
+                    </button>
+                </div>
+                <p class="text-[10px] text-gray-400 mt-2 text-center">Powered by SHL AI Catalog</p>
+            </div>
+        </section>
+
+        <!-- Right: Recommendations Section -->
+        <section class="flex-1 overflow-y-auto p-8 custom-scrollbar">
+            <div class="flex items-center justify-between mb-8">
+                <div>
+                    <h2 class="text-2xl font-bold text-[#051C2C]">Live Assessment Shortlist</h2>
+                    <p class="text-sm text-gray-500">Based on your current conversation</p>
+                </div>
+                <div class="flex gap-2">
+                    <div class="px-4 py-2 bg-white rounded-lg shadow-sm border border-gray-100 text-sm font-medium">
+                        <span id="test-count" class="text-[#00A3AD]">0</span> Recommended
+                    </div>
+                </div>
+            </div>
+
+            <!-- Empty State -->
+            <div id="empty-state" class="flex flex-col items-center justify-center h-[60vh] text-center">
+                <div class="w-20 h-20 bg-gray-100 rounded-full flex items-center justify-center mb-4">
+                    <i data-lucide="layout-grid" class="w-10 h-10 text-gray-300"></i>
+                </div>
+                <h3 class="text-lg font-semibold text-gray-400">No assessments yet</h3>
+                <p class="text-sm text-gray-400 max-w-xs">Start chatting or paste a JD on the left to see live recommendations here.</p>
+            </div>
+
+            <!-- Recommendations Grid -->
+            <div id="recommendations-grid" class="grid grid-cols-1 xl:grid-cols-2 2xl:grid-cols-3 gap-6 hidden">
+                <!-- Cards will be injected here -->
+            </div>
+
+            <!-- Completion Banner -->
+            <div id="completion-banner" class="mt-8 p-6 bg-gradient-to-r from-[#00A3AD] to-[#00828A] rounded-2xl text-white shadow-xl hidden animate-fade-in">
+                <div class="flex items-center gap-4">
+                    <div class="w-12 h-12 bg-white/20 rounded-full flex items-center justify-center">
+                        <i data-lucide="check-circle-2" class="w-8 h-8"></i>
+                    </div>
+                    <div>
+                        <h4 class="text-lg font-bold">Shortlist Finalized!</h4>
+                        <p class="text-sm opacity-90">You've found the perfect mix. Ready to assign these to your candidates?</p>
+                    </div>
+                    <button onclick="alert('Links copied to clipboard!')" class="ml-auto bg-white text-[#00A3AD] px-6 py-2 rounded-xl font-bold hover:bg-gray-100 transition-all shadow-lg">
+                        Copy Links
+                    </button>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <script>
+        // Initialize Lucide icons
+        lucide.createIcons();
+
+        let chatHistory = [];
+        // Default to local, but can be changed if deployed
+        const API_URL = 'https://shl-assessment-recommender-fjyh.onrender.com/chat';
+
+        const chatContainer = document.getElementById('chat-container');
+        const userInput = document.getElementById('user-input');
+        const recommendationsGrid = document.getElementById('recommendations-grid');
+        const emptyState = document.getElementById('empty-state');
+        const testCountDisplay = document.getElementById('test-count');
+        const completionBanner = document.getElementById('completion-banner');
+
+        // Auto-resize textarea
+        userInput.addEventListener('input', function() {
+            this.style.height = 'auto';
+            this.style.height = (this.scrollHeight) + 'px';
+        });
+
+        async function sendMessage() {
+            const content = userInput.value.trim();
+            if (!content) return;
+
+            // Add user message to UI
+            appendMessage('user', content);
+            userInput.value = '';
+            userInput.style.height = 'auto';
+
+            // Prepare API request
+            chatHistory.push({ role: 'user', content: content });
+            
+            // Show thinking indicator
+            const thinkingId = appendThinking();
+
+            try {
+                const response = await fetch(API_URL, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ messages: chatHistory })
+                });
+
+                if (!response.ok) throw new Error('API Error');
+
+                const data = await response.json();
+                
+                // Remove thinking indicator
+                document.getElementById(thinkingId).remove();
+
+                // Add AI reply
+                appendMessage('ai', data.reply);
+                chatHistory.push({ role: 'assistant', content: data.reply });
+
+                // Update Recommendations
+                updateRecommendations(data.recommendations, data.end_of_conversation);
+
+            } catch (error) {
+                if (document.getElementById(thinkingId)) document.getElementById(thinkingId).remove();
+                appendMessage('ai', 'Error connecting to the server. Please make sure the FastAPI backend is running at http://localhost:8000');
+                console.error(error);
+            }
+        }
+
+        function appendMessage(role, text) {
+            const div = document.createElement('div');
+            div.className = `flex flex-col ${role === 'user' ? 'items-end' : 'items-start'} gap-2 animate-fade-in`;
+            
+            div.innerHTML = `
+                <div class="chat-bubble-${role === 'user' ? 'user' : 'ai'} p-4 max-w-[90%] text-sm leading-relaxed">
+                    ${text}
+                </div>
+            `;
+            
+            chatContainer.appendChild(div);
+            chatContainer.scrollTop = chatContainer.scrollHeight;
+        }
+
+        function appendThinking() {
+            const id = 'thinking-' + Date.now();
+            const div = document.createElement('div');
+            div.id = id;
+            div.className = `flex flex-col items-start gap-2 animate-fade-in`;
+            div.innerHTML = `
+                <div class="chat-bubble-ai p-4 flex gap-1 items-center">
+                    <span class="w-1.5 h-1.5 bg-gray-400 rounded-full animate-bounce" style="animation-delay: 0s"></span>
+                    <span class="w-1.5 h-1.5 bg-gray-400 rounded-full animate-bounce" style="animation-delay: 0.1s"></span>
+                    <span class="w-1.5 h-1.5 bg-gray-400 rounded-full animate-bounce" style="animation-delay: 0.2s"></span>
+                </div>
+            `;
+            chatContainer.appendChild(div);
+            chatContainer.scrollTop = chatContainer.scrollHeight;
+            return id;
+        }
+
+        function updateRecommendations(recs, isEnd) {
+            if (recs && recs.length > 0) {
+                emptyState.classList.add('hidden');
+                recommendationsGrid.classList.remove('hidden');
+                recommendationsGrid.innerHTML = '';
+                testCountDisplay.innerText = recs.length;
+
+                recs.forEach(rec => {
+                    const card = document.createElement('div');
+                    card.className = 'bg-white p-6 rounded-2xl shadow-sm border border-gray-100 hover:shadow-md transition-all animate-fade-in';
+                    
+                    const typeColors = {
+                        'P': { bg: 'bg-purple-50', text: 'text-purple-600', label: 'Personality' },
+                        'K': { bg: 'bg-blue-50', text: 'text-blue-600', label: 'Knowledge' },
+                        'A': { bg: 'bg-orange-50', text: 'text-orange-600', label: 'Ability' },
+                        'S': { bg: 'bg-green-50', text: 'text-green-600', label: 'Situational' }
+                    };
+
+                    const type = typeColors[rec.test_type] || typeColors['K'];
+
+                    card.innerHTML = `
+                        <div class="flex justify-between items-start mb-4">
+                            <span class="px-2 py-1 ${type.bg} ${type.text} text-[10px] font-bold uppercase rounded-md tracking-wider">${type.label}</span>
+                            <div class="w-8 h-8 rounded-full bg-gray-50 flex items-center justify-center text-gray-300">
+                                <i data-lucide="external-link" class="w-4 h-4"></i>
+                            </div>
+                        </div>
+                        <h3 class="font-bold text-[#051C2C] mb-2 leading-tight">${rec.name}</h3>
+                        <p class="text-xs text-gray-400 mb-6 line-clamp-2">Standardized SHL assessment for evaluating specific candidate competencies.</p>
+                        <a href="${rec.url}" target="_blank" class="w-full flex items-center justify-center gap-2 py-2 border border-gray-200 rounded-xl text-sm font-semibold hover:bg-gray-50 transition-colors">
+                            View Catalog
+                        </a>
+                    `;
+                    recommendationsGrid.appendChild(card);
+                });
+                lucide.createIcons();
+            }
+
+            if (isEnd) {
+                completionBanner.classList.remove('hidden');
+            } else {
+                completionBanner.classList.add('hidden');
+            }
+        }
+
+        function sendQuickReply(text) {
+            userInput.value = text;
+            sendMessage();
+        }
+
+        function resetChat() {
+            chatHistory = [];
+            chatContainer.innerHTML = `
+                <div class="flex flex-col items-start gap-2">
+                    <div class="chat-bubble-ai p-4 max-w-[90%] text-sm leading-relaxed">
+                        Hi there! I'm your SHL Assessment Assistant. Paste a Job Description or tell me about the role you're hiring for, and I'll recommend the best assessments.
+                    </div>
+                </div>
+            `;
+            recommendationsGrid.innerHTML = '';
+            recommendationsGrid.classList.add('hidden');
+            emptyState.classList.remove('hidden');
+            testCountDisplay.innerText = '0';
+            completionBanner.classList.add('hidden');
+            lucide.createIcons();
+        }
+
+        // Handle Enter key
+        userInput.addEventListener('keydown', (e) => {
+            if (e.key === 'Enter' && !e.shiftKey) {
+                e.preventDefault();
+                sendMessage();
+            }
+        });
+    </script>
+</body>
+</html>
