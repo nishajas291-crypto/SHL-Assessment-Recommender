@@ -50,8 +50,8 @@ async def chat_endpoint(request: ChatRequest):
         response = agent.chat(messages)
         return response
     except Exception as e:
-        logger.error(f"Error during chat: {str(e)}")
-        raise HTTPException(status_code=500, detail="Internal Server Error")
+        logger.error(f"Error during chat: {str(e)}", exc_info=True)
+        raise HTTPException(status_code=500, detail=f"Chat error: {str(e)}")
 
 if __name__ == "__main__":
     import uvicorn

@@ -40,9 +40,11 @@ class Agent:
         self.retriever = retriever
         self.api_key = os.environ.get("GEMINI_API_KEY")
         if not self.api_key:
-            logger.warning("GEMINI_API_KEY environment variable not set. Agent will fail if called.")
+            logger.error("GEMINI_API_KEY environment variable not set! Agent will fail if called.")
         else:
-            self.client = genai.Client()
+            logger.info(f"GEMINI_API_KEY found (length={len(self.api_key)}). Initializing Gemini client...")
+            self.client = genai.Client(api_key=self.api_key)
+            logger.info("Gemini client initialized successfully.")
 
     def _extract_search_query(self, messages: List[dict]) -> str:
         """Extract a search query from the conversation history."""
