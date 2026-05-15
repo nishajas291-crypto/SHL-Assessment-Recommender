@@ -1,18 +1,17 @@
 import json
-import numpy as np
-from sentence_transformers import SentenceTransformer
-import faiss
 import logging
+from typing import List
+from sklearn.feature_extraction.text import TfidfVectorizer
+from sklearn.metrics.pairwise import cosine_similarity
 
 logger = logging.getLogger(__name__)
 
 class AssessmentRetriever:
-    def __init__(self, catalog_path: str = 'shl_product_catalog.json', model_name: str = 'all-MiniLM-L6-v2'):
+    def __init__(self, catalog_path: str = 'shl_product_catalog.json'):
         self.catalog_path = catalog_path
-        self.model_name = model_name
         self.items = []
-        self.index = None
-        self.model = None
+        self.vectorizer = TfidfVectorizer(stop_words='english')
+        self.tfidf_matrix = None
         
         self.load_and_index()
 
@@ -20,18 +19,21 @@ class AssessmentRetriever:
         """Format an assessment item into a searchable string."""
         name = item.get('name', '')
         description = item.get('description', '')
-        keys = ", ".join(item.get('keys', []))
-        job_levels = ", ".join(item.get('job_levels', []))
+        keys = " ".join(item.get('keys', []))
+        job_levels = " ".join(item.get('job_levels', []))
         
-        return f"Name: {name}\nKeys: {keys}\nJob Levels: {job_levels}\nDescription: {description}"
+        # Weighted formatting: Repeating name to give it more importance in TF-IDF
+        return f"{name} {name} {keys} {job_levels} {description}"
 
     def load_and_index(self):
         logger.info(f"Loading catalog from {self.catalog_path}")
-        with open(self.catalog_path, 'r', encoding='utf-8') as f:
-            data = json.load(f, strict=False)
+        try:
+            with open(self.catalog_path, 'r', encoding='utf-8') as f:
+                data = json.load(f, strict=False)
+        except Exception as e:
+            logger.error(f"Failed to load catalog: {e}")
+            return
             
-        # The JSON has some malformed structure in real-world?
-        # Ensure it's a list.
         if isinstance(data, list):
             self.items = data
         else:
@@ -41,34 +43,37 @@ class AssessmentRetriever:
             logger.warning("No items loaded from catalog!")
             return
 
-        logger.info(f"Loaded {len(self.items)} items. Loading embedding model {self.model_name}...")
-        self.model = SentenceTransformer(self.model_name)
+        logger.info(f"Loaded {len(self.items)} items. Initializing TF-IDF Index...")
         
         texts = [self._format_item(item) for item in self.items]
         
-        logger.info("Computing embeddings...")
-        embeddings = self.model.encode(texts, convert_to_numpy=True, normalize_embeddings=True)
-        
-        dimension = embeddings.shape[1]
-        self.index = faiss.IndexFlatIP(dimension)  # Inner product with normalized vectors = Cosine Similarity
-        self.index.add(embeddings)
-        logger.info("Indexing complete.")
+        # Fit and transform the texts to create the TF-IDF matrix
+        self.tfidf_matrix = self.vectorizer.fit_transform(texts)
+        logger.info("TF-IDF Indexing complete. Low-memory mode active.")
 
-    def search(self, query: str, top_k: int = 15) -> list[dict]:
-        if not self.index or not self.model:
+    def search(self, query: str, top_k: int = 15) -> List[dict]:
+        if self.tfidf_matrix is None:
             return []
             
-        query_embedding = self.model.encode([query], convert_to_numpy=True, normalize_embeddings=True)
-        distances, indices = self.index.search(query_embedding, top_k)
+        # Transform the query using the same vectorizer
+        query_vec = self.vectorizer.transform([query])
+        
+        # Calculate cosine similarity between query and all items
+        similarities = cosine_similarity(query_vec, self.tfidf_matrix).flatten()
+        
+        # Get indices of top_k most similar items
+        related_indices = similarities.argsort()[::-1][:top_k]
         
         results = []
-        for idx in indices[0]:
-            if 0 <= idx < len(self.items):
+        for idx in related_indices:
+            # Only include if there's some similarity (> 0)
+            if similarities[idx] > 0:
                 results.append(self.items[idx])
+        
+        # If no similarity found, return first few items as fallback or empty
         return results
 
-# Singleton instance to be used by the app
-# Will be initialized in main.py on startup or lazily
+# Singleton instance
 retriever_instance = None
 
 def get_retriever() -> AssessmentRetriever:
