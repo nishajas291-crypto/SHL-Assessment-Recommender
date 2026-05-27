@@ -12,7 +12,7 @@ logger = logging.getLogger(__name__)
 
 from fastapi.middleware.cors import CORSMiddleware
 
-app = FastAPI(title="Conversational SHL Assessment Recommender")
+app = FastAPI(title="AI-Powered HR Assessment Recommender")
 
 # Add CORS middleware
 app.add_middleware(

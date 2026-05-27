@@ -3,20 +3,20 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>SHL Assessment Recommender | AI Dashboard</title>
+    <title>TalentAxis Recommender | AI HR Dashboard</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://unpkg.com/lucide@latest"></script>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <style>
         :root {
-            --shl-primary: #00A3AD;
-            --shl-navy: #051C2C;
-            --shl-bg: #F3F7F9;
+            --primary-color: #00A3AD;
+            --navy-color: #051C2C;
+            --bg-color: #F3F7F9;
         }
         body {
             font-family: 'Inter', sans-serif;
-            background-color: var(--shl-bg);
-            color: var(--shl-navy);
+            background-color: var(--bg-color);
+            color: var(--navy-color);
         }
         .glass {
             background: rgba(255, 255, 255, 0.7);
@@ -24,13 +24,13 @@
             border: 1px solid rgba(255, 255, 255, 0.3);
         }
         .chat-bubble-user {
-            background: var(--shl-primary);
+            background: var(--primary-color);
             color: white;
             border-radius: 18px 18px 2px 18px;
         }
         .chat-bubble-ai {
             background: white;
-            color: var(--shl-navy);
+            color: var(--navy-color);
             border-radius: 18px 18px 18px 2px;
             box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
         }
@@ -44,11 +44,11 @@
             background: #CBD5E0;
             border-radius: 10px;
         }
-        .shl-btn {
-            background: var(--shl-primary);
+        .primary-btn {
+            background: var(--primary-color);
             transition: all 0.3s ease;
         }
-        .shl-btn:hover {
+        .primary-btn:hover {
             filter: brightness(1.1);
             transform: translateY(-1px);
         }
@@ -73,8 +73,8 @@
                 <i data-lucide="cpu" class="w-6 h-6"></i>
             </div>
             <div>
-                <h1 class="text-xl font-bold tracking-tight text-[#051C2C]">SHL <span class="font-normal opacity-60">Recommender</span></h1>
-                <p class="text-[10px] uppercase tracking-widest font-semibold text-[#00A3AD]">AI-Powered Assessment Engine</p>
+                <h1 class="text-xl font-bold tracking-tight text-[#051C2C]">TalentAxis <span class="font-normal opacity-60">Recommender</span></h1>
+                <p class="text-[10px] uppercase tracking-widest font-semibold text-[#00A3AD]">AI-Powered HR Assessment Engine</p>
             </div>
         </div>
         <div class="flex items-center gap-4">
@@ -105,7 +105,7 @@
                 <!-- AI Welcome Message -->
                 <div class="flex flex-col items-start gap-2">
                     <div class="chat-bubble-ai p-4 max-w-[90%] text-sm leading-relaxed">
-                        Hi there! I'm your SHL Assessment Assistant. Paste a Job Description or tell me about the role you're hiring for, and I'll recommend the best assessments.
+                        Hi there! I'm your TalentAxis AI HR Assessment Assistant. Paste a Job Description or tell me about the role you're hiring for, and I'll recommend the best assessments.
                     </div>
                 </div>
             </div>
@@ -129,12 +129,12 @@
                     <button 
                         onclick="sendMessage()"
                         id="send-btn"
-                        class="shl-btn w-10 h-10 rounded-xl flex items-center justify-center text-white shrink-0 shadow-lg shadow-[#00A3AD]/20"
+                        class="primary-btn w-10 h-10 rounded-xl flex items-center justify-center text-white shrink-0 shadow-lg shadow-[#00A3AD]/20"
                     >
                         <i data-lucide="send" class="w-5 h-5"></i>
                     </button>
                 </div>
-                <p class="text-[10px] text-gray-400 mt-2 text-center">Powered by SHL AI Catalog</p>
+                <p class="text-[10px] text-gray-400 mt-2 text-center">Powered by TalentAxis AI Catalog</p>
             </div>
         </section>
 
@@ -189,8 +189,11 @@
         lucide.createIcons();
 
         let chatHistory = [];
-        // Default to local, but can be changed if deployed
-        const API_URL = 'https://shl-assessment-recommender-fjyh.onrender.com/chat';
+        
+        // Smart URL selection: relative path when hosted, fallback to local when run standalone
+        const API_URL = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1' || !window.location.hostname 
+            ? 'http://localhost:8000/chat' 
+            : '/chat';
 
         const chatContainer = document.getElementById('chat-container');
         const userInput = document.getElementById('user-input');
@@ -307,7 +310,7 @@
                             </div>
                         </div>
                         <h3 class="font-bold text-[#051C2C] mb-2 leading-tight">${rec.name}</h3>
-                        <p class="text-xs text-gray-400 mb-6 line-clamp-2">Standardized SHL assessment for evaluating specific candidate competencies.</p>
+                        <p class="text-xs text-gray-400 mb-6 line-clamp-2">Standardized TalentAxis assessment for evaluating specific candidate competencies.</p>
                         <a href="${rec.url}" target="_blank" class="w-full flex items-center justify-center gap-2 py-2 border border-gray-200 rounded-xl text-sm font-semibold hover:bg-gray-50 transition-colors">
                             View Catalog
                         </a>
@@ -334,7 +337,7 @@
             chatContainer.innerHTML = `
                 <div class="flex flex-col items-start gap-2">
                     <div class="chat-bubble-ai p-4 max-w-[90%] text-sm leading-relaxed">
-                        Hi there! I'm your SHL Assessment Assistant. Paste a Job Description or tell me about the role you're hiring for, and I'll recommend the best assessments.
+                        Hi there! I'm your TalentAxis AI HR Assessment Assistant. Paste a Job Description or tell me about the role you're hiring for, and I'll recommend the best assessments.
                     </div>
                 </div>
             `;

@@ -40,8 +40,8 @@ RESPONSE_SCHEMA = {
     "required": ["reply", "recommendations", "end_of_conversation"]
 }
 
-SYSTEM_PROMPT_TEMPLATE = """You are the Conversational SHL Assessment Recommender.
-Your job is to guide users from a vague intent to a grounded shortlist of SHL assessments.
+SYSTEM_PROMPT_TEMPLATE = """You are the Conversational HR Assessment Recommender.
+Your job is to guide users from a vague intent to a grounded shortlist of HR assessments.
 
 CORE RULES:
 1. CLARIFY: If the query is vague, ask clarifying questions. Recommendations MUST be empty during clarification.
@@ -96,7 +96,7 @@ class Agent:
         from google.genai import types
         client = genai.Client(api_key=self.gemini_key)
         contents = [types.Content(
-            role="user" if m["role"] == "user" else "model",
+            role="user" if m["role"].lower() in ["user", "human"] else "model",
             parts=[types.Part.from_text(text=m["content"])]
         ) for m in messages]
         config = types.GenerateContentConfig(
@@ -108,16 +108,23 @@ class Agent:
         return response.text
 
     def chat(self, messages: List[dict]) -> AgentResponse:
-        search_query = " ".join([m["content"] for m in messages[-2:]])
+        # Normalize messages for API consistency
+        norm_messages = []
+        for m in messages:
+            r = m["role"].lower()
+            role = "user" if r in ["user", "human"] else "assistant"
+            norm_messages.append({"role": role, "content": m["content"]})
+
+        search_query = " ".join([m["content"] for m in norm_messages[-2:]])
         candidates = self.retriever.search(search_query, top_k=15)
         candidates_json = json.dumps(candidates, indent=2)
         system_instruction = SYSTEM_PROMPT_TEMPLATE.format(candidates_json=candidates_json)
 
         try:
             if self.api_provider == "groq":
-                res_text = self._call_groq(system_instruction, messages)
+                res_text = self._call_groq(system_instruction, norm_messages)
             else:
-                res_text = self._call_gemini(system_instruction, messages)
+                res_text = self._call_gemini(system_instruction, norm_messages)
             return AgentResponse(**json.loads(res_text))
         except Exception as e:
             logger.error(f"Error: {e}")

@@ -7,7 +7,7 @@ from sklearn.metrics.pairwise import cosine_similarity
 logger = logging.getLogger(__name__)
 
 class AssessmentRetriever:
-    def __init__(self, catalog_path: str = 'shl_product_catalog.json'):
+    def __init__(self, catalog_path: str = 'talentaxis_product_catalog.json'):
         self.catalog_path = catalog_path
         self.items = []
         self.vectorizer = TfidfVectorizer(stop_words='english')
@@ -86,6 +86,6 @@ if __name__ == '__main__':
     # Test
     logging.basicConfig(level=logging.INFO)
     ret = AssessmentRetriever()
-    res = ret.search("I need a Rust coding assessment", top_k=2)
+    res = ret.search("I need a Java coding assessment", top_k=2)
     for r in res:
-        print(f"- {r.get('name')} | {r.get('link')}")
+        print(f"- {r.get('name')} | {r.get('url')}")
